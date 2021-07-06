@@ -6,6 +6,7 @@ import itertools
 import copy
 import os, glob, pickle
 import sys
+import re
 
 # Data Preparation
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, LabelEncoder
