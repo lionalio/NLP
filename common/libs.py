@@ -21,8 +21,8 @@ from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
 from nltk.corpus import stopwords
 from spellchecker import SpellChecker
-import spacy
-from spacy.lang.en import English
+#import spacy
+#from spacy.lang.en import English
 import gensim
 from textblob import TextBlob
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
