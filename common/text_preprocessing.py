@@ -122,20 +122,24 @@ class TextPreprocessing():
         
         return ' '.join(tokenized_text)
 
-    def run_text_preprocessing(self):
+    def run_text_preprocessing(self, vectorizer='tfidf', run_classification=True):
         print('Begin text processing')
         self.X = self.df[self.text_columns].apply(self.text_preprocessing)
         print('end text processing')
-        self.create_tfidf_vectorizer()
-        self.create_train_test()
+        if vectorizer=='tfidf':
+            self.create_tfidf_vectorizer()
+        else:
+            self.create_count_vectorizer()
+        if run_classification:
+            self.create_train_test()
         self.save_to_pkl()
 
-    def create_count_vectorizer(self, max_df=0.8, min_df=2, stop_words='english'):
-        cnt_vec = CountVectorizer(max_df=max_df, min_df=min_df, stop_words=stop_words)
+    def create_count_vectorizer(self, max_features=3000, max_df=0.8, min_df=2, stop_words='english'):
+        cnt_vec = CountVectorizer(max_features=max_features, max_df=max_df, min_df=min_df, stop_words=stop_words)
         self.X_vectorized = cnt_vec.fit_transform(self.X).toarray()
 
-    def create_tfidf_vectorizer(self, max_df=0.8, min_df=2, stop_words='english'):
-        tfidf = TfidfVectorizer(max_df=max_df, min_df=min_df, stop_words=stop_words)
+    def create_tfidf_vectorizer(self, max_features=3000, max_df=0.8, min_df=2, stop_words='english'):
+        tfidf = TfidfVectorizer(max_features=max_features, max_df=max_df, min_df=min_df, stop_words=stop_words)
         self.X_vectorized = tfidf.fit_transform(self.X).toarray()
 
     def create_train_test(self):

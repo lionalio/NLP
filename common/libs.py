@@ -38,7 +38,7 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LogisticRegression, PassiveAggressiveClassifier, Lasso, LassoCV
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.cluster import KMeans
-from sklearn.decomposition import TruncatedSVD
+from sklearn.decomposition import TruncatedSVD, NMF, LatentDirichletAllocation
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.manifold import Isomap
 

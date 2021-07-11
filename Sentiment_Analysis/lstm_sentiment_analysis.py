@@ -17,7 +17,7 @@ from keras.wrappers.scikit_learn import KerasClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix
 
 def lstm(dim_input, dim_output):
-    vocabSize=3000
+    vocabSize=500
     embed_dim = 128
     lstm_out = 196
     model = Sequential()
@@ -35,17 +35,19 @@ df = pd.read_csv('Tweets.csv')
 detector = Classification('Tweets.csv', 'text', 'airline_sentiment')
 detector.run_text_preprocessing()
 
-#max_fatures = 3000
-#tokenizer = Tokenizer(num_words=max_fatures, split=' ')
-#tokenizer.fit_on_texts(df['text'].values)
-#X = tokenizer.texts_to_sequences(df['text'].values)
+max_features = 500
+tokenizer = Tokenizer(num_words=max_features, split=' ')
+tokenizer.fit_on_texts(df['text'].values)
+X1 = tokenizer.texts_to_sequences(df['text'].values)
 #y = pd.get_dummies(df['airline_sentiment']).values
 X, y = detector.X_vectorized, detector.y
 X = pad_sequences(X)
+X1 = pad_sequences(X1)
 #X_train, X_test, y_train, y_test = detector.X_train, detector.X_test, detector.y_train, detector.y_test
 #X_train = pad_sequences(X_train)
 #X_test = pad_sequences(X_test)
-print(detector.X_train)
+print(X.shape)
+print(X1.shape)
 dim_input = X.shape[1]
 dim_output = len(y.unique())
 
@@ -69,8 +71,8 @@ model_best = grid.best_estimator_
 preds = model_best.predict(X_test)
 score = model_best.score(X_test, y_test)
 
-rounded_preds = model.predict_classes(X_test, batch_size=128, verbose=0)
-rounded_y_test=np.argmax(y_test, axis=1)
-confuse_matrix = confusion_matrix(rounded_y_test, rounded_preds)
+#rounded_preds = model.predict_classes(X_test, batch_size=128, verbose=0)
+#rounded_y_test=np.argmax(y_test, axis=1)
+#confuse_matrix = confusion_matrix(rounded_y_test, rounded_preds)
 print("score: %.2f" % (score))
-print("confusion matrix", confuse_matrix)
+#print("confusion matrix", confuse_matrix)
