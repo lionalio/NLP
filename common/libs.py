@@ -15,6 +15,10 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.decomposition import PCA
 from sklearn.pipeline import Pipeline
 
+# For hyperparameter tuning
+from skopt import BayesSearchCV
+from skopt.space import Real, Categorical, Integer
+
 # For NLP vectorization
 from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
