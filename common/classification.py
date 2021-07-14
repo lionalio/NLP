@@ -35,15 +35,24 @@ class Classification(TextPreprocessing):
         self.params_classifier = params
         self.parameter_set = True
 
-    @timing
-    def classifier(self):
+    def classifier(self,  method='GridSearch'):
         if self.parameter_set is False:
             raise Exception('Error: All parameters are not yet set!')
-        grid = GridSearchCV(estimator=self.method_classifier, 
-                            param_grid=self.params_classifier)
-        grid.fit(self.X_train, self.y_train)        
-        self.method_classifier = grid.best_estimator_
-        print(grid.best_params_)
+        if method == 'GridSearch':
+            opt = GridSearchCV(
+                estimator=self.method_classifier, 
+                param_grid=self.params_classifier
+            )
+        elif method == 'BayesSearch':     
+            opt = BayesSearchCV(
+                estimator=self.method_classifier,
+                search_spaces=self.params_classifier,
+                n_iter=20,
+                random_state=7
+            )
+        opt.fit(self.X_train, self.y_train)   
+        self.method_classifier = opt.best_estimator_
+        print(opt.best_params_)
         
     @timing
     def evaluate(self):
@@ -77,13 +86,12 @@ class Classification(TextPreprocessing):
         plt.legend(loc="lower right")
         plt.show()
 
-    @timing
-    def run(self):
+    def run(self, method='GridSearch'):
         if self.method_set is False:
             raise Exception('Methods are not yet set. Aborting!')
         if self.parameter_set is False:
             print('Warning: All parameters are taking default values. Consider tuning!')
         if self.load_data is False:
             super().run_text_preprocessing()
-        self.classifier()
+        self.classifier(method=method)
         self.evaluate()
