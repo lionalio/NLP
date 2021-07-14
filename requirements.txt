@@ -10,3 +10,4 @@ textblob==0.15.3
 smart_open==2.0.0
 xgboost==1.4.0
 imbalaced-learn==0.8.0
+scikit-optimize==0.8.1
