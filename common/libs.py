@@ -7,6 +7,7 @@ import copy
 import os, glob, pickle
 import sys
 import re
+import multiprocessing
 
 # Data Preparation
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, LabelEncoder
@@ -22,12 +23,16 @@ from skopt.space import Real, Categorical, Integer
 # For NLP vectorization
 from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
+from nltk.tokenize.regexp import regexp_tokenize
 from nltk.stem import PorterStemmer
 from nltk.corpus import stopwords
 from spellchecker import SpellChecker
 #import spacy
 #from spacy.lang.en import English
 import gensim
+from gensim.models.word2vec import Word2Vec
+from gensim.models import KeyedVectors
+
 from textblob import TextBlob
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 
@@ -69,3 +74,5 @@ all_stopwords.extend(stopwords_nltk)
 all_stopwords.extend(stopwords_gensim)
 # all unique stop words
 all_stopwords = list(set(all_stopwords))
+
+n_cores = multiprocessing.cpu_count()
