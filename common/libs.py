@@ -31,7 +31,8 @@ from spellchecker import SpellChecker
 #from spacy.lang.en import English
 import gensim
 from gensim.models.word2vec import Word2Vec
-from gensim.models import KeyedVectors
+from gensim.models import KeyedVectors,  Doc2Vec
+from gensim.models.doc2vec import TaggedDocument
 
 from textblob import TextBlob
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer

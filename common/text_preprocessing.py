@@ -15,6 +15,8 @@ class TextPreprocessing():
         self.vectorizer = None
         self.tokenizer = None
         self.model_w2v = None
+        self.model_d2v = None
+        self.method_embedding = None
         self.max_features = 3000
         print('Begin text processing')
         self.X = self.X.apply(self.text_preprocessing)
@@ -132,15 +134,15 @@ class TextPreprocessing():
         
         return ' '.join(tokenized_text)
 
-    def run_text_preprocessing(self, vectorizer='tfidf', embedding=False, run_classification=True):
+    def run_text_preprocessing(self, vectorizer='tfidf', embedding=None, weighting=True, run_classification=True):
         if vectorizer == 'tfidf':
             self.create_tfidf_vectorizer()
         elif vectorizer == 'count':
             self.create_count_vectorizer()
         
-        if embedding:
+        if embedding is not None:
             print(self.vectorizer)
-            self.create_embedded_vectorizer()
+            self.create_embedded_vectorizer(embedding, weighting)
             print(self.X_vectorized)
         if run_classification:
             self.create_train_test()
@@ -177,10 +179,28 @@ class TextPreprocessing():
         print('Finished and saved in ', model_name)
         self.model_w2v = model
 
+    def create_doc_embedding(self):
+        print('Create word embedding using doc2vec')
+        X_tagdoc = [TaggedDocument(words=self.tokenizer(text), tags=[tag]) 
+                    for text, tag in zip(self.X, self.y)]
+        model = Doc2Vec(dm=0, vector_size=self.max_features, negative=5, hs=0, min_count=2, sample=0, workers=n_cores-1)
+        model.build_vocab(X_tagdoc)
+        model.train(X_tagdoc, total_examples=len(X_tagdoc), epochs=20, report_delay=1)
+        model_name = 'model_d2v'
+        model.save(model_name)
+        print('Finished and saved in ', model_name)
+        self.model_d2v = model
+
     def load_word_embedding(self, file_w2v):
         self.model_w2v = KeyedVectors.load(file_w2v)
 
-    def function_embedding(self, text):
+    def load_doc_embedding(self, file_d2v):
+        self.model_d2v = Doc2Vec.load(file_d2v)
+
+    def feature_word2vec(self):
+        pass
+
+    def function_word2vec(self, text, weighting=True):
         if self.model_w2v is None:
             raise Exception('Please consider load word embedding first or create a new one.')
         size = self.max_features
@@ -190,6 +210,7 @@ class TextPreprocessing():
         tokens = self.tokenizer(text)
         for word in tokens: # self.vectorizer.get_feature_names():
             try:
+                w = tfidf[word] if weighting is True else 1.
                 vec += self.model_w2v[word].reshape((1, size)) * tfidf[word]
                 count += 1.
             except KeyError: 
@@ -199,9 +220,32 @@ class TextPreprocessing():
             vec /= count
         return vec
 
-    def create_embedded_vectorizer(self):
-        self.X_vectorized = self.X.apply(self.function_embedding)
+    def function_doc2vec(self, text, weighting=True):
+        if self.model_d2v is None:
+            raise Exception('Please consider load doc embedding first or create a new one.')
+        size = self.max_features
+        vec = np.zeros(size)
+        tokens = self.tokenizer(text)
+        vec_d2v = dict(zip(tokens, self.model_d2v.infer_vector(tokens)))
+        tfidf = dict(zip(self.vectorizer.get_feature_names(), self.vectorizer.idf_))
+        for word in tokens:
+            try:
+                w = tfidf[word] if weighting is True else 1.
+                vec += vec_d2v[word] * w
+            except KeyError:
 
+                continue
+
+        return vec
+
+    def create_embedded_vectorizer(self, embedding='word2vec', weighting=True):
+        print(embedding)
+        if embedding == 'word2vec':
+            self.X_vectorized = self.X.apply(self.function_word2vec, args=(weighting,))
+        elif embedding == 'doc2vec':
+            self.X_vectorized = self.X.apply(self.function_doc2vec, args=(weighting,))
+        else:
+            raise Exception('Method of embedding {} has not yet been defined.'.format(embedding))
 
     def create_train_test(self):
         self.X_train, self.X_test, self.y_train, self.y_test = \
