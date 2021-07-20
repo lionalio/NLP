@@ -1,9 +1,10 @@
 from libs import *
 
 from keras.preprocessing.text import Tokenizer
-from keras.layers import Dense, Embedding, LSTM, SpatialDropout1D, Conv1D, MaxPooling1D, BatchNormalization, Dropout
+from keras.layers import Dense, Embedding, LSTM, SpatialDropout1D, Conv1D, MaxPooling1D, BatchNormalization, Dropout, Flatten, BatchNormalization
 from keras.models import Sequential
 from keras.layers import Dense
+from keras.utils import to_categorical
 from keras.preprocessing.sequence import pad_sequences
 from keras.wrappers.scikit_learn import KerasClassifier
 
@@ -24,14 +25,15 @@ def lstm(dim_input, dim_output, vocabSize=500):
 
 def dense_net(dim_input, dim_output, vocabSize):
     model = Sequential()
-    #model.add(Dense(128, input_shape=dim_input))
-    model.add(Embedding(vocabSize, 128, input_length = dim_input))
-    model.add(Dense(512, activation='relu'))
+    model.add(Dense(128, input_dim=dim_input))
+    #model.add(Embedding(vocabSize, 128, input_length = dim_input))
+    model.add(Dense(256, activation='relu'))
     model.add(BatchNormalization())
-    model.add(Dense(128, activation='relu'))
-    model.add(Dense(512, activation='relu'))
+    model.add(Dense(256, activation='relu'))
+    model.add(Dense(256, activation='relu'))
     model.add(Dropout(0.25))
     model.add(Dense(dim_output, activation='softmax'))
+    model.compile(loss = 'categorical_crossentropy', optimizer='adam', metrics = ['accuracy'])
     model.summary()
 
     return model

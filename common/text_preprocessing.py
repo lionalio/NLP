@@ -51,6 +51,9 @@ class TextPreprocessing():
         # Substituting multiple spaces with single space
         process_text = re.sub(r'\s+', ' ', process_text, flags=re.I)
 
+        # Remove numbers
+        process_text = re.sub(r'[0-9]', '', process_text)
+
         # Removing prefixed 'b'
         process_text = re.sub(r'\^b\s+', '', process_text)
 
@@ -136,14 +139,15 @@ class TextPreprocessing():
 
     def run_text_preprocessing(self, vectorizer='tfidf', embedding=None, weighting=True, run_classification=True):
         if vectorizer == 'tfidf':
+            print('Run tfidf as vectorizer')
             self.create_tfidf_vectorizer()
         elif vectorizer == 'count':
+            print('Run count as vectorizer')
             self.create_count_vectorizer()
         
         if embedding is not None:
-            print(self.vectorizer)
+            print('Run {} as embedding method'.format(embedding))
             self.create_embedded_vectorizer(embedding, weighting)
-            print(self.X_vectorized)
         if run_classification:
             self.create_train_test()
         self.save_to_pkl()
@@ -197,9 +201,6 @@ class TextPreprocessing():
     def load_doc_embedding(self, file_d2v):
         self.model_d2v = Doc2Vec.load(file_d2v)
 
-    def feature_word2vec(self):
-        pass
-
     def function_word2vec(self, text, weighting=True):
         if self.model_w2v is None:
             raise Exception('Please consider load word embedding first or create a new one.')
@@ -211,7 +212,7 @@ class TextPreprocessing():
         for word in tokens: # self.vectorizer.get_feature_names():
             try:
                 w = tfidf[word] if weighting is True else 1.
-                vec += self.model_w2v[word].reshape((1, size)) * tfidf[word]
+                vec += self.model_w2v[word].reshape((1, size)) * w
                 count += 1.
             except KeyError: 
                 
@@ -224,26 +225,31 @@ class TextPreprocessing():
         if self.model_d2v is None:
             raise Exception('Please consider load doc embedding first or create a new one.')
         size = self.max_features
-        vec = np.zeros(size)
+        vec = np.zeros(size).reshape((1, size))
+        count = 0.
         tokens = self.tokenizer(text)
-        vec_d2v = dict(zip(tokens, self.model_d2v.infer_vector(tokens)))
+        #vec_d2v = dict(zip(tokens, self.model_d2v.infer_vector(tokens)))
+        #vec_org = self.model_d2v.infer_vector(tokens)
         tfidf = dict(zip(self.vectorizer.get_feature_names(), self.vectorizer.idf_))
         for word in tokens:
             try:
                 w = tfidf[word] if weighting is True else 1.
-                vec += vec_d2v[word] * w
+                vec += self.model_d2v[word].reshape((1, size)) * w
             except KeyError:
 
                 continue
-
+        if count != 0:
+            vec /= count
         return vec
 
     def create_embedded_vectorizer(self, embedding='word2vec', weighting=True):
         print(embedding)
         if embedding == 'word2vec':
             self.X_vectorized = self.X.apply(self.function_word2vec, args=(weighting,))
+            self.X_vectorized = np.concatenate([z for z in self.X_vectorized])
         elif embedding == 'doc2vec':
             self.X_vectorized = self.X.apply(self.function_doc2vec, args=(weighting,))
+            self.X_vectorized = np.concatenate([z for z in self.X_vectorized])
         else:
             raise Exception('Method of embedding {} has not yet been defined.'.format(embedding))
 
