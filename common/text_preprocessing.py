@@ -209,26 +209,6 @@ class TextPreprocessing():
         if embedding == 'doc2vec':
             self.model_d2v = Doc2Vec.load(file_model)
 
-    def function_word2vec(self, text, weighting=True):
-        if self.model_w2v is None:
-            raise Exception('Please consider load word embedding first or create a new one.')
-        size = self.max_features
-        vec = np.zeros(size).reshape((1, size))
-        count = 0.
-        tfidf = dict(zip(self.vectorizer.get_feature_names(), self.vectorizer.idf_))
-        tokens = self.tokenizer(text)
-        for word in tokens: # self.vectorizer.get_feature_names():
-            try:
-                w = tfidf[word] if weighting is True else 1.
-                vec += self.model_w2v[word].reshape((1, size)) * w
-                count += 1.
-            except KeyError: 
-                
-                continue
-        if count != 0:
-            vec /= count
-        return vec
-
     def function_embedding(self, text, embedding='doc2vec', weighting=True):
         if self.model_d2v is None and embedding == 'doc2vec':
             raise Exception('Please consider load doc2vec embedding model first or create a new one.')
