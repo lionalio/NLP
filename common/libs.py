@@ -44,8 +44,8 @@ from imblearn.over_sampling import SMOTE
 import xgboost as xgb
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, \
     GradientBoostingRegressor, RandomForestRegressor
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.linear_model import LogisticRegression, PassiveAggressiveClassifier, Lasso, LassoCV
+from sklearn.naive_bayes import MultinomialNB, BernoulliNB, CategoricalNB
+from sklearn.linear_model import LogisticRegression, PassiveAggressiveClassifier, Lasso, LassoCV, RidgeClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.cluster import KMeans
 from sklearn.decomposition import TruncatedSVD, NMF, LatentDirichletAllocation

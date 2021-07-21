@@ -164,7 +164,7 @@ class TextPreprocessing():
         self.X_vectorized = tfidf.fit_transform(self.X).toarray()
         self.vectorizer = tfidf
 
-    def create_word_embedding(self, min_word_count = 40,  # Minimum word count
+    def create_word2vec_model(self, min_word_count = 40,  # Minimum word count
                                     num_workers = 4,     # Number of parallel threads
                                     context = 10,        # Context window size
                                     downsampling = 1e-3 # (0.001) Downsample setting for frequent words)
@@ -183,7 +183,7 @@ class TextPreprocessing():
         print('Finished and saved in ', model_name)
         self.model_w2v = model
 
-    def create_doc_embedding(self):
+    def create_doc2vec_model(self):
         print('Create word embedding using doc2vec')
         X_tagdoc = [TaggedDocument(words=self.tokenizer(text), tags=[tag]) 
                     for text, tag in zip(self.X, self.y)]
@@ -195,11 +195,19 @@ class TextPreprocessing():
         print('Finished and saved in ', model_name)
         self.model_d2v = model
 
-    def load_word_embedding(self, file_w2v):
-        self.model_w2v = KeyedVectors.load(file_w2v)
+    def create_embedding_model(self, embedding='word2vec'):
+        if embedding == 'word2vec':
+            self.create_word2vec_model()
+        elif embedding == 'doc2vec':
+            self.create_doc2vec_model()
+        else:
+            raise Exception('** Error: Unknown embedding method {}. Stopping...'.format(embedding))
 
-    def load_doc_embedding(self, file_d2v):
-        self.model_d2v = Doc2Vec.load(file_d2v)
+    def load_word_embedding(self, file_model, embedding='word2vec'):
+        if embedding == 'word2vec':
+            self.model_w2v = KeyedVectors.load(file_model)
+        if embedding == 'doc2vec':
+            self.model_d2v = Doc2Vec.load(file_model)
 
     def function_word2vec(self, text, weighting=True):
         if self.model_w2v is None:
@@ -221,20 +229,30 @@ class TextPreprocessing():
             vec /= count
         return vec
 
-    def function_doc2vec(self, text, weighting=True):
-        if self.model_d2v is None:
-            raise Exception('Please consider load doc embedding first or create a new one.')
+    def function_embedding(self, text, embedding='doc2vec', weighting=True):
+        if self.model_d2v is None and embedding == 'doc2vec':
+            raise Exception('Please consider load doc2vec embedding model first or create a new one.')
+        if self.model_w2v is None and embedding == 'word2vec':
+            raise Exception('Please consider load word2vec embedding model first or create a new one.')
         size = self.max_features
         vec = np.zeros(size).reshape((1, size))
         count = 0.
         tokens = self.tokenizer(text)
         #vec_d2v = dict(zip(tokens, self.model_d2v.infer_vector(tokens)))
         #vec_org = self.model_d2v.infer_vector(tokens)
+        model = None
+        if embedding == 'doc2vec':
+            model = self.model_d2v
+        elif embedding == 'word2vec':
+            model = self.model_w2v
+        else:
+            raise Exception('** Error: Unknown embedding method {}. Stopping...'.format(embedding))
+
         tfidf = dict(zip(self.vectorizer.get_feature_names(), self.vectorizer.idf_))
         for word in tokens:
             try:
                 w = tfidf[word] if weighting is True else 1.
-                vec += self.model_d2v[word].reshape((1, size)) * w
+                vec += model[word].reshape((1, size)) * w
             except KeyError:
 
                 continue
@@ -243,12 +261,8 @@ class TextPreprocessing():
         return vec
 
     def create_embedded_vectorizer(self, embedding='word2vec', weighting=True):
-        print(embedding)
-        if embedding == 'word2vec':
-            self.X_vectorized = self.X.apply(self.function_word2vec, args=(weighting,))
-            self.X_vectorized = np.concatenate([z for z in self.X_vectorized])
-        elif embedding == 'doc2vec':
-            self.X_vectorized = self.X.apply(self.function_doc2vec, args=(weighting,))
+        if embedding is not None:
+            self.X_vectorized = self.X.apply(self.function_embedding, args=(embedding, weighting))
             self.X_vectorized = np.concatenate([z for z in self.X_vectorized])
         else:
             raise Exception('Method of embedding {} has not yet been defined.'.format(embedding))
